@@ -18,15 +18,14 @@ function fetchWeatherData(cityName) {
     .then(response => {
       if (response.ok) {
         return response.json();
-      }
-      else {
+      } else {
         alert('Please enter a valid location');
       }
     })
     .then(weatherData => {
       displayCurrentWeather(weatherData);
       updateSearchHistory(cityName);
-      getForecast(weatherData.coord.lat, weatherData.coord.lon)
+      getForecast(weatherData.coord.lat, weatherData.coord.lon);
     })
     .catch(error => {
       console.error('Error fetching weather data:', error);
@@ -36,7 +35,21 @@ function fetchWeatherData(cityName) {
 function updateSearchHistory(cityName) {
   const historyItem = document.createElement('li');
   historyItem.textContent = cityName;
+  historyItem.classList.add('history-item'); // Fixed: Add the class here
   historyList.appendChild(historyItem);
+
+  const historyItems = Array.from(historyList.children).map(item => item.textContent);
+  localStorage.setItem('searchHistory', JSON.stringify(historyItems));
+}
+
+function loadSearchHistory() {
+  const historyItems = JSON.parse(localStorage.getItem('searchHistory')) || [];
+  historyItems.forEach(item => {
+    const historyItem = document.createElement('li');
+    historyItem.textContent = item;
+    historyItem.classList.add('history-item'); // Fixed: Add the class here
+    historyList.appendChild(historyItem);
+  });
 }
 
 function displayCurrentWeather(weatherData) {
@@ -57,13 +70,11 @@ function getForecast(lat, lon) {
     .then(response => {
       if (response.ok) {
         return response.json();
-      }
-      else {
+      } else {
         alert('Error fetching forecast data. Please try again.');
       }
     })
     .then(forecastData => {
-      console.log(forecastData);
       displayForecast(forecastData);
     })
     .catch(error => {
@@ -76,10 +87,10 @@ function displayForecast(forecastData) {
   forecastView.innerHTML = '';
 
   forecastItems.forEach(item => {
-    dateComponents = item.dt_txt.split(" ")[0].split("-");
+    const dateComponents = item.dt_txt.split(' ')[0].split('-');
     forecastView.innerHTML += `
         <div class="forecast-item">
-          <p>Date: ${dateComponents[1] + "/" + dateComponents[2] + "/" + dateComponents[0]}</p>
+          <p>Date: ${dateComponents[1] + '/' + dateComponents[2] + '/' + dateComponents[0]}</p>
           <p>Temperature: ${item.main.temp} °F</p>
           <p>Humidity: ${item.main.humidity}%</p>
           <p>Wind Speed: ${item.wind.speed} mph</p>
@@ -88,3 +99,14 @@ function displayForecast(forecastData) {
       `;
   });
 }
+
+window.addEventListener('load', function () {
+  loadSearchHistory();
+
+  historyList.addEventListener('click', event => {
+    if (event.target.classList.contains('history-item')) {
+      const cityName = event.target.textContent;
+      fetchWeatherData(cityName);
+    }
+  });
+});
